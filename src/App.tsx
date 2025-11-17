@@ -19,6 +19,14 @@ const formatDateTime = (iso: string): string => {
   }).format(date)
 }
 
+// Limited set of substance options shown in the UI
+const SUBSTANCE_OPTIONS = [
+  'Caffeine',
+  'Marijuana',
+  'Alcohol',
+  'Nicotine',
+]
+
 const STORAGE_KEY = 'subtrack_logs_v1'
 
 export default function App() {
@@ -80,12 +88,20 @@ export default function App() {
           <h2>New Log</h2>
           <label>
             <div className="label">Substance</div>
-            <input
+            <select
               value={substance}
               onChange={(e) => setSubstance(e.target.value)}
-              placeholder="e.g., Alcohol, Caffeine"
               required
-            />
+            >
+              <option value="" disabled>
+                Select substance...
+              </option>
+              {SUBSTANCE_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label>
