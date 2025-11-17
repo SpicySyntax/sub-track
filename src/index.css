@@ -39,3 +39,11 @@ textarea{resize:vertical}
 .item-title{font-weight:600;color:var(--accent)}
 .item-time{color:var(--muted);font-size:0.9rem}
 .item-notes{color:#cfe0ff;white-space:pre-wrap}
+
+/* Pills used in the form and history */
+.pill{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:var(--text);font-size:0.9rem}
+.pill.selected{background:#2b3bff22;border-color:var(--accent);color:var(--text)}
+.history-pill{border-color:rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text)}
+
+.item-feelings{margin-top:6px}
+.item-dosage{font-size:0.95rem}

@@ -5,6 +5,8 @@ interface LogEntry {
   id: string
   substance: string
   notes: string
+  feelings?: string[]
+  dosage?: string
   timestamp: string // ISO string for storage
 }
 
@@ -27,12 +29,16 @@ const SUBSTANCE_OPTIONS = [
   'Nicotine',
 ]
 
+const FEELING_OPTIONS = ['sad', 'stressed', 'angry', 'happy', 'energized', 'tired']
+
 const STORAGE_KEY = 'subtrack_logs_v1'
 
 export default function App() {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [substance, setSubstance] = useState('')
   const [notes, setNotes] = useState('')
+  const [feelings, setFeelings] = useState<string[]>([])
+  const [dosage, setDosage] = useState('')
 
   // Load from localStorage once
   useEffect(() => {
@@ -63,11 +69,15 @@ export default function App() {
       id: crypto.randomUUID(),
       substance: substance.trim(),
       notes: notes.trim(),
+      feelings: feelings.length ? feelings : undefined,
+      dosage: dosage.trim() || undefined,
       timestamp: new Date().toISOString(),
     }
     setLogs((s) => [newLog, ...s])
     setSubstance('')
     setNotes('')
+    setFeelings([])
+    setDosage('')
   }
 
   const clearAll = () => {
@@ -105,12 +115,51 @@ export default function App() {
           </label>
 
           <label>
+            <div className="label">Feelings</div>
+            <div className="feelings-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {FEELING_OPTIONS.map((f) => {
+                const selected = feelings.includes(f)
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => {
+                      setFeelings((s) => (s.includes(f) ? s.filter((x) => x !== f) : [...s, f]))
+                    }}
+                    aria-pressed={selected}
+                    className={selected ? 'pill selected' : 'pill'}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 999,
+                      border: selected ? '1px solid #333' : '1px solid #ccc',
+                      background: selected ? '#e6f0ff' : 'transparent',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {f}
+                  </button>
+                )
+              })}
+            </div>
+          </label>
+
+          <label>
+            <div className="label">Dosage</div>
+            <input
+              type="text"
+              value={dosage}
+              onChange={(e) => setDosage(e.target.value)}
+              placeholder="e.g. 10 mg, 1 drink, etc. (optional)"
+            />
+          </label>
+
+          <label>
             <div className="label">Notes</div>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Context, feelings, amount (optional)"
+              placeholder="Context, context details (optional)"
             />
           </label>
 
@@ -140,6 +189,21 @@ export default function App() {
                     <div className="item-title">{log.substance}</div>
                     <div className="item-time">{formatDateTime(log.timestamp)}</div>
                   </div>
+                  {log.feelings && log.feelings.length > 0 && (
+                    <div className="item-feelings" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                      {log.feelings.map((f) => (
+                        <span key={f} className="pill history-pill">{f}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {log.dosage && (
+                    <div className="item-dosage" style={{ color: '#cfe0ff', marginBottom: 6 }}>
+                      <strong style={{ color: 'var(--muted)', marginRight: 6 }}>Dose:</strong>
+                      {log.dosage}
+                    </div>
+                  )}
+
                   {log.notes && <div className="item-notes">{log.notes}</div>}
                 </li>
               ))}
