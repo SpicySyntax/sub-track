@@ -1,8 +1,11 @@
 const CACHE_NAME = 'sub-track-v1';
+// Use relative paths so the service worker works when served under a repo subpath
+// (e.g. /sub-track/ on GitHub Pages). Relative paths resolve from the service
+// worker's location.
 const CORE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
@@ -37,6 +40,6 @@ self.addEventListener('fetch', (event) => {
         }
         return res;
       })
-      .catch(() => caches.match(event.request).then((r) => r || caches.match('/index.html')))
+      .catch(() => caches.match(event.request).then((r) => r || caches.match('./index.html')))
   );
 });

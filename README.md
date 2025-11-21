@@ -7,6 +7,7 @@ All data is stored in your browser and is never saved off anywhere else.
 
 - visualizations over time
 - units for dosage
+- fix github pages deployment at https://spicysyntax.github.io/sub-track/
 
 ## Deployment / CI
 
