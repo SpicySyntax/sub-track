@@ -4,7 +4,14 @@ Helps users track substance use over time, with the goal of harm reduction and m
 
 ## TODO
 
-- Add persistence backend
 - visualizations over time
 - units for dosage
-- deploy solution on the web
+
+## Deployment / CI
+
+This repository is configured to automatically build and deploy the site to GitHub Pages whenever commits are pushed to the `main` branch.
+
+- The GitHub Actions workflow is at `.github/workflows/deploy-docs.yml`.
+- It runs `npm ci` and `npm run build` (Vite) then publishes the `dist` output to GitHub Pages using the official Pages actions.
+
+To use this, ensure GitHub Pages is enabled for the repository (the Pages deployment from the action will create the site artifact). If you want a custom domain, configure it in the repository settings after the first successful deployment.
