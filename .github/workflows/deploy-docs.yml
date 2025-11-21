@@ -41,7 +41,7 @@ jobs:
       - name: Upload Pages artifact
         # Use the Pages-specific uploader which creates an artifact compatible
         # with the deploy-pages action and avoids issues with symlinks/hardlinks.
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
       - name: Deploy to GitHub Pages
