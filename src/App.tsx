@@ -98,20 +98,22 @@ export default function App() {
           <h2>New Log</h2>
           <label>
             <div className="label">Substance</div>
-            <select
-              value={substance}
-              onChange={(e) => setSubstance(e.target.value)}
-              required
-            >
-              <option value="" disabled>
-                Select substance...
-              </option>
-              {SUBSTANCE_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+            <div className="substance-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {SUBSTANCE_OPTIONS.map((s) => {
+                const selected = substance === s
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setSubstance(s)}
+                    aria-pressed={selected}
+                    className={selected ? 'pill selected substance-pill' : 'pill substance-pill'}
+                  >
+                    {s}
+                  </button>
+                )
+              })}
+            </div>
           </label>
 
           <label>
