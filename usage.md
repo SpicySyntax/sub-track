@@ -26,3 +26,12 @@ npm install
 ```bash
 npm run dev
 ```
+
+## Notes about SQLite WASM
+
+This project uses an in-browser SQLite engine (sql.js) which requires the `sql-wasm.wasm` file.
+By default the app will look for `/sql-wasm.wasm` (place the file in the `public/` folder). If that file
+is not present the app will fall back to the CDN hosted version at `https://sql.js.org/dist/sql-wasm.wasm`.
+
+If you prefer to host the WASM file locally, download `sql-wasm.wasm` from the sql.js project and put it
+into `public/sql-wasm.wasm` before running the app.

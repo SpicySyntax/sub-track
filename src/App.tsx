@@ -1,4 +1,5 @@
 import React, { useEffect, useState, FormEvent } from 'react'
+import { getAllLogs as dbGetAll, addLog as dbAddLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw } from './db'
 
 // --- TYPE DEFINITIONS ---
 interface LogEntry {
@@ -31,7 +32,7 @@ const SUBSTANCE_OPTIONS = [
 
 const FEELING_OPTIONS = ['sad', 'stressed', 'angry', 'happy', 'energized', 'tired']
 
-const STORAGE_KEY = 'subtrack_logs_v1'
+// localStorage key is no longer used; persistence now via sqlite in IndexedDB
 
 export default function App() {
   const [logs, setLogs] = useState<LogEntry[]>([])
@@ -40,29 +41,37 @@ export default function App() {
   const [feelings, setFeelings] = useState<string[]>([])
   const [dosage, setDosage] = useState('')
 
-  // Load from localStorage once
+  const [dbReady, setDbReady] = useState(false)
+
+  // Initialize DB and load logs once
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed: LogEntry[] = JSON.parse(raw)
+    let mounted = true
+    ;(async () => {
+      try {
+        await dbInit()
+        const rows = await dbGetAll()
+        if (!mounted) return
+        // rows use the same shape as LogEntry but feelings is stored as JSON string
+        const parsed = rows.map((r: any) => ({
+          id: r.id,
+          substance: r.substance,
+          notes: r.notes || '',
+          feelings: r.feelings ? JSON.parse(r.feelings) : undefined,
+          dosage: r.dosage || undefined,
+          timestamp: r.timestamp,
+        }))
         setLogs(parsed)
+        setDbReady(true)
+      } catch (e) {
+        console.warn('Failed to initialize DB', e)
       }
-    } catch (e) {
-      console.warn('Failed to read logs from storage', e)
+    })()
+    return () => {
+      mounted = false
     }
   }, [])
 
-  // Persist when logs change
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(logs))
-    } catch (e) {
-      console.warn('Failed to save logs to storage', e)
-    }
-  }, [logs])
-
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!substance.trim()) return
     const newLog: LogEntry = {
@@ -73,16 +82,34 @@ export default function App() {
       dosage: dosage.trim() || undefined,
       timestamp: new Date().toISOString(),
     }
-    setLogs((s) => [newLog, ...s])
+    try {
+      // persist to db then update UI optimistically
+      await dbAddLog({
+        id: newLog.id,
+        substance: newLog.substance,
+        notes: newLog.notes || null,
+        feelings: newLog.feelings ? JSON.stringify(newLog.feelings) : null,
+        dosage: newLog.dosage ?? null,
+        timestamp: newLog.timestamp,
+      } as any)
+      setLogs((s) => [newLog, ...s])
+    } catch (err) {
+      console.warn('Failed to save log to DB', err)
+    }
+
     setSubstance('')
     setNotes('')
     setFeelings([])
     setDosage('')
   }
 
-  const clearAll = () => {
-    if (confirm('Clear all logs? This cannot be undone.')) {
+  const clearAll = async () => {
+    if (!confirm('Clear all logs? This cannot be undone.')) return
+    try {
+      await dbClearAll()
       setLogs([])
+    } catch (err) {
+      console.warn('Failed to clear DB', err)
     }
   }
 
@@ -182,7 +209,55 @@ export default function App() {
         <section>
           <div className="section-header">
             <h2>History</h2>
-            <div className="muted">{logs.length} entries</div>
+            <div className="muted">{logs.length} entries{!dbReady ? ' (loading...)' : ''}</div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={async () => {
+                try {
+                  const rows = await dbGetAll()
+                  const parsed = rows.map((r: any) => ({
+                    id: r.id,
+                    substance: r.substance,
+                    notes: r.notes || '',
+                    feelings: r.feelings ? JSON.parse(r.feelings) : undefined,
+                    dosage: r.dosage || undefined,
+                    timestamp: r.timestamp,
+                  }))
+                  setLogs(parsed)
+                  console.debug('UI: reloaded from DB, rows=', parsed.length)
+                } catch (err) {
+                  console.warn('UI: reload from DB failed', err)
+                }
+              }}
+            >
+              Reload from DB
+            </button>
+
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={async () => {
+                try {
+                  const data = await dbExportRaw()
+                  const buf = data instanceof Uint8Array ? (data as Uint8Array).buffer as ArrayBuffer : (data as any)
+                  const blob = new Blob([buf], { type: 'application/octet-stream' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = 'subtrack.sqlite'
+                  a.click()
+                  URL.revokeObjectURL(url)
+                } catch (err) {
+                  console.warn('UI: export failed', err)
+                }
+              }}
+            >
+              Export DB
+            </button>
           </div>
 
           {logs.length === 0 ? (
