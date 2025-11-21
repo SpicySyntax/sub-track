@@ -20,3 +20,9 @@ With this file in place, you can simply run nvm use in the project directory to 
 ```bash
 npm install
 ```
+
+## Run Locally
+
+```bash
+npm run dev
+```
