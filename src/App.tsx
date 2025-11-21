@@ -136,6 +136,10 @@ export default function App() {
                       border: selected ? '1px solid #333' : '1px solid #ccc',
                       background: selected ? '#e6f0ff' : 'transparent',
                       cursor: 'pointer',
+                      /* Ensure sufficient contrast: when a feeling is selected we use a dark text color
+                         because the selected background is a light color (#e6f0ff). This overrides
+                         the global .pill.selected text color which is light (for other pill types). */
+                      color: selected ? '#07111a' : undefined,
                     }}
                   >
                     {f}
