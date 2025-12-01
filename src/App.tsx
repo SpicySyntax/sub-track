@@ -32,6 +32,36 @@ const SUBSTANCE_OPTIONS = [
 
 const FEELING_OPTIONS = ['stressed', 'sad', 'angry', 'happy', 'relaxed', 'energized', 'tired']
 
+// Contextual dosage options by substance
+const DOSAGE_OPTIONS: Record<string, { label: string; description: string }[]> = {
+  Marijuana: [
+    { label: '5mg', description: 'Light (edible)' },
+    { label: '10mg', description: 'Standard (edible)' },
+    { label: '20mg', description: 'Strong (edible)' },
+    { label: '1 hit', description: 'Single hit (flower)' },
+    { label: '2-3 hits', description: 'Few hits (flower)' },
+    { label: 'Dab', description: 'Concentrate' },
+  ],
+  Caffeine: [
+    { label: '1 cup', description: 'Coffee' },
+    { label: '2 cups', description: 'Coffee' },
+    { label: '1 shot espresso', description: 'Espresso' },
+    { label: '2 shots espresso', description: 'Espresso' },
+    { label: '1 cup tea', description: 'Tea' },
+  ],
+  Alcohol: [
+    { label: '1 drink', description: 'Single standard drink' },
+    { label: '2 drinks', description: 'Two standard drinks' },
+    { label: '3 drinks', description: 'Three standard drinks' },
+    { label: '4+ drinks', description: 'Four or more drinks' },
+  ],
+  Nicotine: [
+    { label: '1 cigarette', description: 'Single cigarette' },
+    { label: 'Few puffs', description: 'Vape/e-cig' },
+    { label: '1 pouch', description: 'Nicotine pouch' },
+  ],
+}
+
 // localStorage key is no longer used; persistence now via sqlite in IndexedDB
 
 export default function App() {
@@ -132,7 +162,10 @@ export default function App() {
                   <button
                     key={s}
                     type="button"
-                    onClick={() => setSubstance(s)}
+                    onClick={() => {
+                      setSubstance(s)
+                      setDosage('')
+                    }}
                     aria-pressed={selected}
                     className={selected ? 'pill selected substance-pill' : 'pill substance-pill'}
                   >
@@ -176,15 +209,59 @@ export default function App() {
             </div>
           </label>
 
-          <label>
-            <div className="label">Dosage</div>
-            <input
-              type="text"
-              value={dosage}
-              onChange={(e) => setDosage(e.target.value)}
-              placeholder="e.g. 10 mg, 1 drink, etc. (optional)"
-            />
-          </label>
+          {substance && DOSAGE_OPTIONS[substance] && (
+            <label>
+              <div className="label">Dosage</div>
+              <div className="dosage-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                {DOSAGE_OPTIONS[substance].map((option) => {
+                  const selected = dosage === option.label
+                  return (
+                    <button
+                      key={option.label}
+                      type="button"
+                      onClick={() => setDosage(option.label)}
+                      aria-pressed={selected}
+                      className={selected ? 'pill selected' : 'pill'}
+                      title={option.description}
+                    >
+                      {option.label}
+                    </button>
+                  )
+                })}
+              </div>
+              <input
+                type="text"
+                value={dosage}
+                onChange={(e) => setDosage(e.target.value)}
+                placeholder="Or enter custom dosage"
+              />
+            </label>
+          )}
+
+          {substance && !DOSAGE_OPTIONS[substance] && (
+            <label>
+              <div className="label">Dosage</div>
+              <input
+                type="text"
+                value={dosage}
+                onChange={(e) => setDosage(e.target.value)}
+                placeholder="e.g. 10 mg, 1 drink, etc. (optional)"
+              />
+            </label>
+          )}
+
+          {!substance && (
+            <label>
+              <div className="label">Dosage</div>
+              <input
+                type="text"
+                value={dosage}
+                onChange={(e) => setDosage(e.target.value)}
+                placeholder="Select a substance first (optional)"
+                disabled
+              />
+            </label>
+          )}
 
           <label>
             <div className="label">Notes</div>
