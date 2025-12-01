@@ -35,12 +35,13 @@ const FEELING_OPTIONS = ['stressed', 'sad', 'angry', 'happy', 'relaxed', 'energi
 // Contextual dosage options by substance
 const DOSAGE_OPTIONS: Record<string, { label: string; description: string }[]> = {
   Marijuana: [
+    { label: '2.5mg', description: 'Micro (edible)' },
     { label: '5mg', description: 'Light (edible)' },
     { label: '10mg', description: 'Standard (edible)' },
     { label: '20mg', description: 'Strong (edible)' },
     { label: '1 hit', description: 'Single hit (flower)' },
     { label: '2-3 hits', description: 'Few hits (flower)' },
-    { label: 'Dab', description: 'Concentrate' },
+    { label: '1 Dab', description: 'Concentrate' },
   ],
   Caffeine: [
     { label: '1 cup', description: 'Coffee' },
