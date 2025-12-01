@@ -1,4 +1,4 @@
-import React, { useEffect, useState, FormEvent } from 'react'
+import React, { useEffect, useState, FormEvent, useMemo } from 'react'
 import { getAllLogs as dbGetAll, addLog as dbAddLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw } from './db'
 
 // --- TYPE DEFINITIONS ---
@@ -58,11 +58,178 @@ const DOSAGE_OPTIONS: Record<string, { label: string; description: string }[]> =
   Nicotine: [
     { label: '1 cigarette', description: 'Single cigarette' },
     { label: 'Few puffs', description: 'Vape/e-cig' },
-    { label: '1 pouch', description: 'Nicotine pouch' },
+    { label: '1 pouch', description: 'Nicotine pouch (3mg)' },
   ],
 }
 
 // localStorage key is no longer used; persistence now via sqlite in IndexedDB
+
+// --- Helpers for trends ---
+const getDateKey = (iso: string) => {
+  const d = new Date(iso)
+  // yyyy-mm-dd
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+const defaultSubstanceColors: Record<string, string> = {
+  Marijuana: '#8bd99b',
+  Caffeine: '#ffd166',
+  Alcohol: '#ff8b8b',
+  Nicotine: '#bdbdf6',
+}
+
+function buildDateRange(days: number | null) {
+  // returns array of date keys from (today - days + 1) .. today inclusive
+  const arr: string[] = []
+  if (days === null) return arr
+  const now = new Date()
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now)
+    d.setDate(now.getDate() - i)
+    arr.push(getDateKey(d.toISOString()))
+  }
+  return arr
+}
+
+function aggregateUsageOverTime(logs: any[], days: number | null, substances: string[]) {
+  const labels = days ? buildDateRange(days) : []
+  const series: Record<string, number[]> = {}
+  const subs = substances.length ? substances : []
+  subs.forEach((s) => {
+    series[s] = labels.map(() => 0)
+  })
+
+  for (const l of logs) {
+    if (!l.substance) continue
+    if (!subs.includes(l.substance)) continue
+    if (!l.timestamp) continue
+    const key = getDateKey(l.timestamp)
+    const idx = labels.indexOf(key)
+    if (idx >= 0) series[l.substance][idx]++
+  }
+
+  return { labels, series }
+}
+
+function aggregateFrequencies(logs: any[], days: number | null) {
+  const counts: Record<string, number> = {}
+  const cutoff = days ? Date.now() - days * 24 * 60 * 60 * 1000 : null
+  for (const l of logs) {
+    if (!l.substance) continue
+    if (cutoff && new Date(l.timestamp).getTime() < cutoff) continue
+    counts[l.substance] = (counts[l.substance] || 0) + 1
+  }
+  return counts
+}
+
+function aggregateFeelings(logs: any[], days: number | null, filterSubstance: string | 'All') {
+  const counts: Record<string, number> = {}
+  const cutoff = days ? Date.now() - days * 24 * 60 * 60 * 1000 : null
+  for (const l of logs) {
+    if (cutoff && new Date(l.timestamp).getTime() < cutoff) continue
+    if (filterSubstance !== 'All' && l.substance !== filterSubstance) continue
+    if (!l.feelings || !Array.isArray(l.feelings)) continue
+    for (const f of l.feelings) counts[f] = (counts[f] || 0) + 1
+  }
+  return counts
+}
+
+// --- Simple SVG chart components ---
+function MultiLineChart({ labels, series }: { labels: string[]; series: Record<string, number[]> }) {
+  const width = 640
+  const height = 140
+  const pad = 24
+  const allValues = Object.values(series).flat()
+  const max = allValues.length ? Math.max(...allValues) : 1
+
+  const pointsFor = (values: number[]) =>
+    values.map((v, i) => {
+      const x = pad + (i / Math.max(1, labels.length - 1)) * (width - pad * 2)
+      const y = height - pad - (v / max) * (height - pad * 2)
+      return `${x},${y}`
+    })
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 160 }}>
+      <rect x={0} y={0} width={width} height={height} fill="transparent" />
+      {/* grid lines */}
+      <g stroke="rgba(255,255,255,0.04)">
+        <line x1={pad} x2={width - pad} y1={pad} y2={pad} />
+        <line x1={pad} x2={width - pad} y1={height / 2} y2={height / 2} />
+        <line x1={pad} x2={width - pad} y1={height - pad} y2={height - pad} />
+      </g>
+      {Object.entries(series).map(([name, vals]) => {
+        const pts = pointsFor(vals).join(' ')
+        const color = defaultSubstanceColors[name] || '#9fb6ff'
+        return (
+          <g key={name}>
+            <polyline fill="none" stroke={color} strokeWidth={2} points={pts} strokeLinejoin="round" strokeLinecap="round" />
+            {/* dots */}
+            {vals.map((v, i) => {
+              const x = pad + (i / Math.max(1, labels.length - 1)) * (width - pad * 2)
+              const y = height - pad - (v / max) * (height - pad * 2)
+              return <circle key={i} cx={x} cy={y} r={3} fill={color} />
+            })}
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+function VerticalBarChart({ items }: { items: { label: string; value: number; color?: string }[] }) {
+  const width = 640
+  const height = 140
+  const pad = 24
+  const max = items.length ? Math.max(...items.map((i) => i.value)) : 1
+  const bw = (width - pad * 2) / Math.max(1, items.length)
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 160 }}>
+      {items.map((it, i) => {
+        const x = pad + i * bw + bw * 0.1
+        const barW = bw * 0.8
+        const h = (it.value / Math.max(1, max)) * (height - pad * 2)
+        const y = height - pad - h
+        const cx = x + barW / 2
+        return (
+          <g key={it.label}>
+            <rect x={x} y={y} width={barW} height={h} fill={it.color || '#7fbfff'} rx={6} />
+            {/* value above bar */}
+            <text x={cx} y={y - 6} fontSize={12} fill="var(--muted)" textAnchor="middle">{it.value}</text>
+            {/* label below bar */}
+            <text x={cx} y={height - pad + 16} fontSize={12} fill="var(--muted)" textAnchor="middle">{it.label}</text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+function HorizontalBarChart({ items }: { items: { label: string; value: number; color?: string }[] }) {
+  const width = 640
+  const height = Math.max(40, items.length * 28 + 20)
+  const padL = 120
+  const padR = 20
+  const max = items.length ? Math.max(...items.map((i) => i.value)) : 1
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: Math.min(240, height) }}>
+      {items.map((it, i) => {
+        const y = 10 + i * 28
+        const w = ((width - padL - padR) * it.value) / Math.max(1, max)
+        return (
+          <g key={it.label} transform={`translate(0, ${y})`}>
+            <text x={8} y={14} fontSize={12} fill="var(--muted)">{it.label}</text>
+            <rect x={padL} y={2} width={w} height={18} fill={it.color || '#7fbfff'} rx={6} />
+            <text x={padL + w + 8} y={14} fontSize={12} fill="var(--muted)">{it.value}</text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
 
 export default function App() {
   const [logs, setLogs] = useState<LogEntry[]>([])
@@ -142,6 +309,20 @@ export default function App() {
       console.warn('Failed to clear DB', err)
     }
   }
+
+  // Trends UI state
+  const [trendDays, setTrendDays] = useState<number | null>(30) // null = all time
+  const [trendFilterSubstance, setTrendFilterSubstance] = useState<string | 'All'>('All')
+
+  const usageOverTime = useMemo(() => {
+    // when showing all substances we include all known options
+    const subs = SUBSTANCE_OPTIONS
+    return aggregateUsageOverTime((logs as any[]), trendDays, subs)
+  }, [logs, trendDays])
+
+  const frequencyCounts = useMemo(() => aggregateFrequencies((logs as any[]), trendDays), [logs, trendDays])
+
+  const feelingsCounts = useMemo(() => aggregateFeelings((logs as any[]), trendDays, trendFilterSubstance), [logs, trendDays, trendFilterSubstance])
 
   return (
     <div className="app-root">
@@ -367,6 +548,62 @@ export default function App() {
               ))}
             </ul>
           )}
+        </section>
+
+        <section>
+          <div className="section-header">
+            <h2>Trends</h2>
+            <div className="muted">Breakdown by substance & feelings</div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 12 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <div className="label" style={{ margin: 0 }}>Range</div>
+                {[7, 30, 90].map((d) => (
+                  <button key={d} className={trendDays === d ? 'btn primary' : 'btn ghost'} onClick={() => setTrendDays(d)}>
+                    {d}d
+                  </button>
+                ))}
+                <button className={trendDays === null ? 'btn primary' : 'btn ghost'} onClick={() => setTrendDays(null)}>
+                  All
+                </button>
+              </div>
+
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div className="label" style={{ margin: 0 }}>Filter substance</div>
+                <select value={trendFilterSubstance} onChange={(e) => setTrendFilterSubstance(e.target.value)}>
+                  <option value="All">All</option>
+                  {SUBSTANCE_OPTIONS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <h3 style={{ margin: '6px 0' }}>Usage over time</h3>
+              <MultiLineChart labels={usageOverTime.labels} series={usageOverTime.series} />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <h3 style={{ margin: '6px 0' }}>Frequencies</h3>
+                <VerticalBarChart
+                  items={Object.entries(frequencyCounts).map(([k, v]) => ({ label: k, value: v, color: defaultSubstanceColors[k] }))}
+                />
+              </div>
+
+              <div>
+                <h3 style={{ margin: '6px 0' }}>Emotional trends</h3>
+                <HorizontalBarChart
+                  items={Object.entries(feelingsCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([k, v]) => ({ label: k, value: v }))}
+                />
+              </div>
+            </div>
+          </div>
         </section>
       </div>
     </div>
