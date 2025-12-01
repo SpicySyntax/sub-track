@@ -1,5 +1,5 @@
 import React, { useEffect, useState, FormEvent, useMemo } from 'react'
-import { getAllLogs as dbGetAll, addLog as dbAddLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw } from './db'
+import { getAllLogs as dbGetAll, addLog as dbAddLog, updateLog as dbUpdateLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw } from './db'
 
 // --- TYPE DEFINITIONS ---
 interface LogEntry {
@@ -240,6 +240,8 @@ export default function App() {
   const [dosage, setDosage] = useState('')
 
   const [dbReady, setDbReady] = useState(false)
+  const [editingLogId, setEditingLogId] = useState<string | null>(null)
+  const [editingTimestamp, setEditingTimestamp] = useState('')
 
   // Initialize DB and load logs once
   useEffect(() => {
@@ -309,6 +311,53 @@ export default function App() {
     } catch (err) {
       console.warn('Failed to clear DB', err)
     }
+  }
+
+  const startEditingTime = (log: LogEntry) => {
+    const date = new Date(log.timestamp)
+    // Format as datetime-local input value: YYYY-MM-DDTHH:mm
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const formatted = `${year}-${month}-${day}T${hours}:${minutes}`
+    setEditingLogId(log.id)
+    setEditingTimestamp(formatted)
+  }
+
+  const saveEditedTime = async () => {
+    if (!editingLogId || !editingTimestamp) return
+    try {
+      const newDate = new Date(editingTimestamp)
+      const log = logs.find((l) => l.id === editingLogId)
+      if (!log) return
+
+      const updatedLog: LogEntry = {
+        ...log,
+        timestamp: newDate.toISOString(),
+      }
+
+      await dbUpdateLog({
+        id: updatedLog.id,
+        substance: updatedLog.substance,
+        notes: updatedLog.notes || null,
+        feelings: updatedLog.feelings ? JSON.stringify(updatedLog.feelings) : null,
+        dosage: updatedLog.dosage ?? null,
+        timestamp: updatedLog.timestamp,
+      } as any)
+
+      setLogs((s) => s.map((l) => (l.id === editingLogId ? updatedLog : l)))
+      setEditingLogId(null)
+      setEditingTimestamp('')
+    } catch (err) {
+      console.warn('Failed to save time', err)
+    }
+  }
+
+  const cancelEditingTime = () => {
+    setEditingLogId(null)
+    setEditingTimestamp('')
   }
 
   // Trends UI state
@@ -527,7 +576,41 @@ export default function App() {
                 <li key={log.id} className="card item">
                   <div className="item-head">
                     <div className="item-title">{log.substance}</div>
-                    <div className="item-time">{formatDateTime(log.timestamp)}</div>
+                    {editingLogId === log.id ? (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <input
+                          type="datetime-local"
+                          value={editingTimestamp}
+                          onChange={(e) => setEditingTimestamp(e.target.value)}
+                          style={{ padding: '6px 8px', borderRadius: '6px', border: '1px solid #11202b', background: '#07111a', color: 'var(--text)', width: '200px' }}
+                        />
+                        <button
+                          type="button"
+                          className="btn primary"
+                          onClick={saveEditedTime}
+                          style={{ padding: '6px 10px', fontSize: '0.9rem' }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          className="btn ghost"
+                          onClick={cancelEditingTime}
+                          style={{ padding: '6px 10px', fontSize: '0.9rem' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        className="item-time"
+                        onClick={() => startEditingTime(log)}
+                        style={{ cursor: 'pointer' }}
+                        title="Click to edit"
+                      >
+                        {formatDateTime(log.timestamp)}
+                      </div>
+                    )}
                   </div>
                   {log.feelings && log.feelings.length > 0 && (
                     <div className="item-feelings" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>

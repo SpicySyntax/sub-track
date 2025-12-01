@@ -128,6 +128,18 @@ export async function addLog(row: Row) {
   console.debug('db: addLog id=', row.id)
 }
 
+export async function updateLog(row: Row) {
+  await ensureInit()
+  const stmt = db.prepare('UPDATE logs SET substance = ?, notes = ?, feelings = ?, dosage = ?, timestamp = ? WHERE id = ?')
+  try {
+    stmt.run([row.substance, row.notes ?? null, row.feelings ?? null, row.dosage ?? null, row.timestamp, row.id])
+  } finally {
+    stmt.free()
+  }
+  await persist()
+  console.debug('db: updateLog id=', row.id)
+}
+
 export async function clearAll() {
   await ensureInit()
   db.run('DELETE FROM logs')
