@@ -551,6 +551,7 @@ export default function App() {
           )}
         </section>
 
+        {logs.length > 0 && ( /* Hide trends section when no data is available */
         <section>
           <div className="section-header">
             <h2>Trends</h2>
@@ -606,6 +607,7 @@ export default function App() {
             </div>
           </div>
         </section>
+        )}
       </div>
     </div>
   )
