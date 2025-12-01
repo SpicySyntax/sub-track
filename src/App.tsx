@@ -24,13 +24,13 @@ const formatDateTime = (iso: string): string => {
 
 // Limited set of substance options shown in the UI
 const SUBSTANCE_OPTIONS = [
-  'Caffeine',
   'Marijuana',
+  'Caffeine',
   'Alcohol',
   'Nicotine',
 ]
 
-const FEELING_OPTIONS = ['sad', 'stressed', 'angry', 'happy', 'energized', 'tired']
+const FEELING_OPTIONS = ['stressed', 'sad', 'angry', 'happy', 'relaxed', 'energized', 'tired']
 
 // localStorage key is no longer used; persistence now via sqlite in IndexedDB
 
