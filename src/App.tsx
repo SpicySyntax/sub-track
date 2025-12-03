@@ -92,8 +92,8 @@ function aggregateFeelings(logs: any[], days: number | null, filterSubstance: st
 // --- Simple SVG chart components ---
 function MultiLineChart({ labels, series }: { labels: string[]; series: Record<string, number[]> }) {
   const width = 640
-  const height = 140
-  const pad = 24
+  const height = 200 // Increased height for labels
+  const pad = 32     // Increased padding
   const allValues = Object.values(series).flat()
   const max = allValues.length ? Math.max(...allValues) : 1
 
@@ -105,25 +105,45 @@ function MultiLineChart({ labels, series }: { labels: string[]; series: Record<s
     })
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 160 }}>
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', maxHeight: 240 }}>
       <rect x={0} y={0} width={width} height={height} fill="transparent" />
       {/* grid lines */}
       <g stroke="rgba(255,255,255,0.04)">
         <line x1={pad} x2={width - pad} y1={pad} y2={pad} />
-        <line x1={pad} x2={width - pad} y1={height / 2} y2={height / 2} />
+        <line x1={pad} x2={width - pad} y1={(height - pad * 2) / 2 + pad} y2={(height - pad * 2) / 2 + pad} />
         <line x1={pad} x2={width - pad} y1={height - pad} y2={height - pad} />
       </g>
+
+      {/* X-axis labels */}
+      <g>
+        {labels.map((label, i) => {
+          // Show every nth label if too many
+          const step = Math.ceil(labels.length / 6)
+          if (i % step !== 0 && i !== labels.length - 1) return null
+
+          const x = pad + (i / Math.max(1, labels.length - 1)) * (width - pad * 2)
+          // Format date to be short (e.g. "12/03")
+          const shortDate = label.slice(5).replace('-', '/')
+
+          return (
+            <text key={i} x={x} y={height - 8} fontSize={16} fill="var(--muted)" textAnchor="middle">
+              {shortDate}
+            </text>
+          )
+        })}
+      </g>
+
       {Object.entries(series).map(([name, vals]) => {
         const pts = pointsFor(vals).join(' ')
         const color = defaultSubstanceColors[name] || '#9fb6ff'
         return (
           <g key={name}>
-            <polyline fill="none" stroke={color} strokeWidth={2} points={pts} strokeLinejoin="round" strokeLinecap="round" />
+            <polyline fill="none" stroke={color} strokeWidth={4} points={pts} strokeLinejoin="round" strokeLinecap="round" />
             {/* dots */}
             {vals.map((v, i) => {
               const x = pad + (i / Math.max(1, labels.length - 1)) * (width - pad * 2)
               const y = height - pad - (v / max) * (height - pad * 2)
-              return <circle key={i} cx={x} cy={y} r={3} fill={color} />
+              return <circle key={i} cx={x} cy={y} r={6} fill={color} />
             })}
           </g>
         )
@@ -134,12 +154,12 @@ function MultiLineChart({ labels, series }: { labels: string[]; series: Record<s
 
 function VerticalBarChart({ items }: { items: { label: string; value: number; color?: string }[] }) {
   const width = 640
-  const height = 140
-  const pad = 24
+  const height = 220 // Increased height
+  const pad = 40     // Increased padding
   const max = items.length ? Math.max(...items.map((i) => i.value)) : 1
   const bw = (width - pad * 2) / Math.max(1, items.length)
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 160 }}>
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', maxHeight: 260 }}>
       {items.map((it, i) => {
         const x = pad + i * bw + bw * 0.1
         const barW = bw * 0.8
@@ -150,9 +170,9 @@ function VerticalBarChart({ items }: { items: { label: string; value: number; co
           <g key={it.label}>
             <rect x={x} y={y} width={barW} height={h} fill={it.color || '#7fbfff'} rx={6} />
             {/* value above bar */}
-            <text x={cx} y={y - 6} fontSize={12} fill="var(--muted)" textAnchor="middle">{it.value}</text>
+            <text x={cx} y={y - 10} fontSize={16} fill="var(--muted)" textAnchor="middle">{it.value}</text>
             {/* label below bar */}
-            <text x={cx} y={height - pad + 16} fontSize={12} fill="var(--muted)" textAnchor="middle">{it.label}</text>
+            <text x={cx} y={height - pad + 24} fontSize={16} fill="var(--muted)" textAnchor="middle">{it.label}</text>
           </g>
         )
       })}
@@ -162,20 +182,21 @@ function VerticalBarChart({ items }: { items: { label: string; value: number; co
 
 function HorizontalBarChart({ items }: { items: { label: string; value: number; color?: string }[] }) {
   const width = 640
-  const height = Math.max(40, items.length * 28 + 20)
-  const padL = 120
-  const padR = 20
+  const rowHeight = 44 // Increased row height
+  const height = Math.max(60, items.length * rowHeight + 20)
+  const padL = 160     // Increased left padding for longer labels
+  const padR = 50      // Increased right padding
   const max = items.length ? Math.max(...items.map((i) => i.value)) : 1
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: Math.min(240, height) }}>
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', maxHeight: Math.min(400, height) }}>
       {items.map((it, i) => {
-        const y = 10 + i * 28
+        const y = 10 + i * rowHeight
         const w = ((width - padL - padR) * it.value) / Math.max(1, max)
         return (
           <g key={it.label} transform={`translate(0, ${y})`}>
-            <text x={8} y={14} fontSize={12} fill="var(--muted)">{it.label}</text>
-            <rect x={padL} y={2} width={w} height={18} fill={it.color || '#7fbfff'} rx={6} />
-            <text x={padL + w + 8} y={14} fontSize={12} fill="var(--muted)">{it.value}</text>
+            <text x={8} y={24} fontSize={16} fill="var(--muted)">{it.label}</text>
+            <rect x={padL} y={4} width={w} height={28} fill={it.color || '#7fbfff'} rx={6} />
+            <text x={padL + w + 12} y={24} fontSize={16} fill="var(--muted)">{it.value}</text>
           </g>
         )
       })}
@@ -482,7 +503,7 @@ export default function App() {
                 <MultiLineChart labels={usageOverTime.labels} series={usageOverTime.series} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <div>
                   <h3 style={{ margin: '6px 0' }}>Frequencies</h3>
                   <VerticalBarChart
