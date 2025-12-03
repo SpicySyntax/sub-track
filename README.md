@@ -7,10 +7,8 @@ All data is stored in your browser and is never saved off anywhere else.
 
 Just open https://spicysyntax.github.io/sub-track/ in your browser
 
-## TODO
-
-- visualizations over time
-- units for dosage
+## Local Development
+see [USAGE.md](./USAGE.md)
 
 ## Deployment / CI
 
