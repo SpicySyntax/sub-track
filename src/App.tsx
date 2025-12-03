@@ -246,26 +246,26 @@ export default function App() {
   // Initialize DB and load logs once
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      try {
-        await dbInit()
-        const rows = await dbGetAll()
-        if (!mounted) return
-        // rows use the same shape as LogEntry but feelings is stored as JSON string
-        const parsed = rows.map((r: any) => ({
-          id: r.id,
-          substance: r.substance,
-          notes: r.notes || '',
-          feelings: r.feelings ? JSON.parse(r.feelings) : undefined,
-          dosage: r.dosage || undefined,
-          timestamp: r.timestamp,
-        }))
-        setLogs(parsed)
-        setDbReady(true)
-      } catch (e) {
-        console.warn('Failed to initialize DB', e)
-      }
-    })()
+      ; (async () => {
+        try {
+          await dbInit()
+          const rows = await dbGetAll()
+          if (!mounted) return
+          // rows use the same shape as LogEntry but feelings is stored as JSON string
+          const parsed = rows.map((r: any) => ({
+            id: r.id,
+            substance: r.substance,
+            notes: r.notes || '',
+            feelings: r.feelings ? JSON.parse(r.feelings) : undefined,
+            dosage: r.dosage || undefined,
+            timestamp: r.timestamp,
+          }))
+          setLogs(parsed)
+          setDbReady(true)
+        } catch (e) {
+          console.warn('Failed to initialize DB', e)
+        }
+      })()
     return () => {
       mounted = false
     }
@@ -361,7 +361,7 @@ export default function App() {
   }
 
   // Trends UI state
-  const [trendDays, setTrendDays] = useState<number | null>(30) // null = all time
+  const [trendDays, setTrendDays] = useState<number | null>(7) // null = all time
   const [trendFilterSubstance, setTrendFilterSubstance] = useState<string | 'All'>('All')
 
   const usageOverTime = useMemo(() => {
@@ -515,61 +515,61 @@ export default function App() {
         </form>
 
         {logs.length > 0 && ( /* Hide trends section when no data is available */
-        <section>
-          <div className="section-header">
-            <h2>Trends</h2>
-            <div className="muted">Breakdown by substance & feelings</div>
-          </div>
+          <section>
+            <div className="section-header">
+              <h2>Trends</h2>
+              <div className="muted">Breakdown by substance & feelings</div>
+            </div>
 
-          <div className="card" style={{ marginBottom: 12 }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <div className="label" style={{ margin: 0 }}>Range</div>
-                {[7, 30, 90].map((d) => (
-                  <button key={d} className={trendDays === d ? 'btn primary' : 'btn ghost'} onClick={() => setTrendDays(d)}>
-                    {d}d
-                  </button>
-                ))}
-                <button className={trendDays === null ? 'btn primary' : 'btn ghost'} onClick={() => setTrendDays(null)}>
-                  All
-                </button>
-              </div>
-
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-                <div className="label" style={{ margin: 0 }}>Filter substance</div>
-                <select value={trendFilterSubstance} onChange={(e) => setTrendFilterSubstance(e.target.value)}>
-                  <option value="All">All</option>
-                  {SUBSTANCE_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
+            <div className="card" style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <div className="label" style={{ margin: 0 }}>Range</div>
+                  {[7, 30, 90].map((d) => (
+                    <button key={d} className={trendDays === d ? 'btn primary' : 'btn ghost'} onClick={() => setTrendDays(d)}>
+                      {d}d
+                    </button>
                   ))}
-                </select>
+                  <button className={trendDays === null ? 'btn primary' : 'btn ghost'} onClick={() => setTrendDays(null)}>
+                    All
+                  </button>
+                </div>
+
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <div className="label" style={{ margin: 0 }}>Filter substance</div>
+                  <select value={trendFilterSubstance} onChange={(e) => setTrendFilterSubstance(e.target.value)}>
+                    <option value="All">All</option>
+                    {SUBSTANCE_OPTIONS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <h3 style={{ margin: '6px 0' }}>Usage over time</h3>
+                <MultiLineChart labels={usageOverTime.labels} series={usageOverTime.series} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <h3 style={{ margin: '6px 0' }}>Frequencies</h3>
+                  <VerticalBarChart
+                    items={Object.entries(frequencyCounts).map(([k, v]) => ({ label: k, value: v, color: defaultSubstanceColors[k] }))}
+                  />
+                </div>
+
+                <div>
+                  <h3 style={{ margin: '6px 0' }}>Emotional trends</h3>
+                  <HorizontalBarChart
+                    items={Object.entries(feelingsCounts)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([k, v]) => ({ label: k, value: v }))}
+                  />
+                </div>
               </div>
             </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <h3 style={{ margin: '6px 0' }}>Usage over time</h3>
-              <MultiLineChart labels={usageOverTime.labels} series={usageOverTime.series} />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <h3 style={{ margin: '6px 0' }}>Frequencies</h3>
-                <VerticalBarChart
-                  items={Object.entries(frequencyCounts).map(([k, v]) => ({ label: k, value: v, color: defaultSubstanceColors[k] }))}
-                />
-              </div>
-
-              <div>
-                <h3 style={{ margin: '6px 0' }}>Emotional trends</h3>
-                <HorizontalBarChart
-                  items={Object.entries(feelingsCounts)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([k, v]) => ({ label: k, value: v }))}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
+          </section>
         )}
 
         <section>
