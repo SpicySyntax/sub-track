@@ -140,6 +140,18 @@ export async function updateLog(row: Row) {
   console.debug('db: updateLog id=', row.id)
 }
 
+export async function deleteLog(id: string) {
+  await ensureInit()
+  const stmt = db.prepare('DELETE FROM logs WHERE id = ?')
+  try {
+    stmt.run([id])
+  } finally {
+    stmt.free()
+  }
+  await persist()
+  console.debug('db: deleteLog id=', id)
+}
+
 export async function clearAll() {
   await ensureInit()
   db.run('DELETE FROM logs')

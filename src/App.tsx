@@ -1,5 +1,5 @@
 import React, { useEffect, useState, FormEvent, useMemo } from 'react'
-import { getAllLogs as dbGetAll, addLog as dbAddLog, updateLog as dbUpdateLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw } from './db'
+import { getAllLogs as dbGetAll, addLog as dbAddLog, updateLog as dbUpdateLog, deleteLog as dbDeleteLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw } from './db'
 import { LogEntry, SUBSTANCE_OPTIONS, FEELING_OPTIONS, DOSAGE_OPTIONS, defaultSubstanceColors, formatDateTime } from './constants'
 import { LogItem } from './components/LogItem'
 
@@ -302,6 +302,16 @@ export default function App() {
     }
   }
 
+  const handleDeleteLog = async (id: string) => {
+    if (!confirm('Delete this log entry? This cannot be undone.')) return
+    try {
+      await dbDeleteLog(id)
+      setLogs((s) => s.filter((l) => l.id !== id))
+    } catch (err) {
+      console.warn('Failed to delete log', err)
+    }
+  }
+
   // Trends UI state
   const [trendDays, setTrendDays] = useState<number | null>(7) // null = all time
   const [trendFilterSubstance, setTrendFilterSubstance] = useState<string | 'All'>('All')
@@ -584,7 +594,7 @@ export default function App() {
             <>
               <ul className="list">
                 {paginatedLogs.map((log) => (
-                  <LogItem key={log.id} log={log} onUpdate={handleUpdateLog} />
+                  <LogItem key={log.id} log={log} onUpdate={handleUpdateLog} onDelete={handleDeleteLog} />
                 ))}
               </ul>
 

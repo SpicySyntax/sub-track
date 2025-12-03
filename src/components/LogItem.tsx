@@ -4,9 +4,10 @@ import { LogEntry, SUBSTANCE_OPTIONS, FEELING_OPTIONS, DOSAGE_OPTIONS, formatDat
 interface LogItemProps {
     log: LogEntry
     onUpdate: (log: LogEntry) => void
+    onDelete: (id: string) => void
 }
 
-export function LogItem({ log, onUpdate }: LogItemProps) {
+export function LogItem({ log, onUpdate, onDelete }: LogItemProps) {
     const [isEditing, setIsEditing] = useState(false)
     const [editedLog, setEditedLog] = useState<LogEntry>(log)
 
@@ -205,8 +206,9 @@ export function LogItem({ log, onUpdate }: LogItemProps) {
 
             {log.notes && <div className="item-notes">{log.notes}</div>}
 
-            <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <button className="btn ghost" onClick={handleStartEdit} style={{ fontSize: '0.8rem', padding: '4px 8px' }}>Edit</button>
+                <button className="btn ghost" onClick={() => onDelete(log.id)} style={{ fontSize: '0.8rem', padding: '4px 8px', color: '#ff6b6b' }}>Delete</button>
             </div>
         </li>
     )
