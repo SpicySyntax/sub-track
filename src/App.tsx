@@ -301,6 +301,7 @@ export default function App() {
     setNotes('')
     setFeelings([])
     setDosage('')
+    setCurrentPage(1)
   }
 
   const clearAll = async () => {
@@ -373,6 +374,16 @@ export default function App() {
   const frequencyCounts = useMemo(() => aggregateFrequencies((logs as any[]), trendDays), [logs, trendDays])
 
   const feelingsCounts = useMemo(() => aggregateFeelings((logs as any[]), trendDays, trendFilterSubstance), [logs, trendDays, trendFilterSubstance])
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
+
+  const totalPages = Math.ceil(logs.length / itemsPerPage)
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return logs.slice(start, start + itemsPerPage)
+  }, [logs, currentPage])
 
   return (
     <div className="app-root">
@@ -629,66 +640,92 @@ export default function App() {
           {logs.length === 0 ? (
             <div className="card empty">Your log history will appear here.</div>
           ) : (
-            <ul className="list">
-              {logs.map((log) => (
-                <li key={log.id} className="card item">
-                  <div className="item-head">
-                    <div className="item-title">{log.substance}</div>
-                    {editingLogId === log.id ? (
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <input
-                          type="datetime-local"
-                          value={editingTimestamp}
-                          onChange={(e) => setEditingTimestamp(e.target.value)}
-                          style={{ padding: '6px 8px', borderRadius: '6px', border: '1px solid #11202b', background: '#07111a', color: 'var(--text)', width: '200px' }}
-                        />
-                        <button
-                          type="button"
-                          className="btn primary"
-                          onClick={saveEditedTime}
-                          style={{ padding: '6px 10px', fontSize: '0.9rem' }}
+            <>
+              <ul className="list">
+                {paginatedLogs.map((log) => (
+                  <li key={log.id} className="card item">
+                    <div className="item-head">
+                      <div className="item-title">{log.substance}</div>
+                      {editingLogId === log.id ? (
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <input
+                            type="datetime-local"
+                            value={editingTimestamp}
+                            onChange={(e) => setEditingTimestamp(e.target.value)}
+                            style={{ padding: '6px 8px', borderRadius: '6px', border: '1px solid #11202b', background: '#07111a', color: 'var(--text)', width: '200px' }}
+                          />
+                          <button
+                            type="button"
+                            className="btn primary"
+                            onClick={saveEditedTime}
+                            style={{ padding: '6px 10px', fontSize: '0.9rem' }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            className="btn ghost"
+                            onClick={cancelEditingTime}
+                            style={{ padding: '6px 10px', fontSize: '0.9rem' }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          className="item-time"
+                          onClick={() => startEditingTime(log)}
+                          style={{ cursor: 'pointer' }}
+                          title="Click to edit"
                         >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          className="btn ghost"
-                          onClick={cancelEditingTime}
-                          style={{ padding: '6px 10px', fontSize: '0.9rem' }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <div
-                        className="item-time"
-                        onClick={() => startEditingTime(log)}
-                        style={{ cursor: 'pointer' }}
-                        title="Click to edit"
-                      >
-                        {formatDateTime(log.timestamp)}
+                          {formatDateTime(log.timestamp)}
+                        </div>
+                      )}
+                    </div>
+                    {log.feelings && log.feelings.length > 0 && (
+                      <div className="item-feelings" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                        {log.feelings.map((f) => (
+                          <span key={f} className="pill history-pill">{f}</span>
+                        ))}
                       </div>
                     )}
-                  </div>
-                  {log.feelings && log.feelings.length > 0 && (
-                    <div className="item-feelings" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-                      {log.feelings.map((f) => (
-                        <span key={f} className="pill history-pill">{f}</span>
-                      ))}
-                    </div>
-                  )}
 
-                  {log.dosage && (
-                    <div className="item-dosage" style={{ color: '#cfe0ff', marginBottom: 6 }}>
-                      <strong style={{ color: 'var(--muted)', marginRight: 6 }}>Dose:</strong>
-                      {log.dosage}
-                    </div>
-                  )}
+                    {log.dosage && (
+                      <div className="item-dosage" style={{ color: '#cfe0ff', marginBottom: 6 }}>
+                        <strong style={{ color: 'var(--muted)', marginRight: 6 }}>Dose:</strong>
+                        {log.dosage}
+                      </div>
+                    )}
 
-                  {log.notes && <div className="item-notes">{log.notes}</div>}
-                </li>
-              ))}
-            </ul>
+                    {log.notes && <div className="item-notes">{log.notes}</div>}
+                  </li>
+                ))}
+              </ul>
+
+              {totalPages > 1 && (
+                <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16 }}>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </button>
+                  <span className="muted">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
 
