@@ -1,67 +1,23 @@
 import React, { useEffect, useState, FormEvent, useMemo } from 'react'
 import { getAllLogs as dbGetAll, addLog as dbAddLog, updateLog as dbUpdateLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw } from './db'
+import { LogEntry, SUBSTANCE_OPTIONS, FEELING_OPTIONS, DOSAGE_OPTIONS, defaultSubstanceColors, formatDateTime } from './constants'
+import { LogItem } from './components/LogItem'
 
 // --- TYPE DEFINITIONS ---
-interface LogEntry {
-  id: string
-  substance: string
-  notes: string
-  feelings?: string[]
-  dosage?: string
-  timestamp: string // ISO string for storage
-}
+// --- TYPE DEFINITIONS ---
+// Moved to constants.ts
 
-const formatDateTime = (iso: string): string => {
-  const date = new Date(iso)
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date)
-}
+
 
 // Limited set of substance options shown in the UI
-const SUBSTANCE_OPTIONS = [
-  'Marijuana',
-  'Caffeine',
-  'Alcohol',
-  'Nicotine',
-]
+// Limited set of substance options shown in the UI
+// Moved to constants.ts
 
-const FEELING_OPTIONS = ['stressed', 'sad', 'angry', 'happy', 'relaxed', 'energized', 'tired']
+
 
 // Contextual dosage options by substance
-const DOSAGE_OPTIONS: Record<string, { label: string; description: string }[]> = {
-  Marijuana: [
-    { label: '2.5mg', description: 'Micro (edible)' },
-    { label: '5mg', description: 'Light (edible)' },
-    { label: '10mg', description: 'Standard (edible)' },
-    { label: '20mg', description: 'Strong (edible)' },
-    { label: '1 hit', description: 'Single hit (flower)' },
-    { label: '2-3 hits', description: 'Few hits (flower)' },
-    { label: '1 Dab', description: 'Concentrate' },
-  ],
-  Caffeine: [
-    { label: '1 cup', description: 'Coffee' },
-    { label: '2 cups', description: 'Coffee' },
-    { label: '1 shot espresso', description: 'Espresso' },
-    { label: '2 shots espresso', description: 'Espresso' },
-    { label: '1 cup tea', description: 'Tea' },
-  ],
-  Alcohol: [
-    { label: '1 drink', description: 'Single standard drink' },
-    { label: '2 drinks', description: 'Two standard drinks' },
-    { label: '3 drinks', description: 'Three standard drinks' },
-    { label: '4+ drinks', description: 'Four or more drinks' },
-  ],
-  Nicotine: [
-    { label: '1 cigarette', description: 'Single cigarette' },
-    { label: 'Few puffs', description: 'Vape/e-cig' },
-    { label: '1 pouch', description: 'Nicotine pouch (3mg)' },
-  ],
-}
+// Contextual dosage options by substance
+// Moved to constants.ts
 
 // localStorage key is no longer used; persistence now via sqlite in IndexedDB
 
@@ -75,12 +31,7 @@ const getDateKey = (iso: string) => {
   return `${y}-${m}-${day}`
 }
 
-const defaultSubstanceColors: Record<string, string> = {
-  Marijuana: '#8bd99b',
-  Caffeine: '#ffd166',
-  Alcohol: '#ff8b8b',
-  Nicotine: '#bdbdf6',
-}
+
 
 function buildDateRange(days: number | null) {
   // returns array of date keys from (today - days + 1) .. today inclusive
@@ -240,8 +191,7 @@ export default function App() {
   const [dosage, setDosage] = useState('')
 
   const [dbReady, setDbReady] = useState(false)
-  const [editingLogId, setEditingLogId] = useState<string | null>(null)
-  const [editingTimestamp, setEditingTimestamp] = useState('')
+
 
   // Initialize DB and load logs once
   useEffect(() => {
@@ -314,31 +264,8 @@ export default function App() {
     }
   }
 
-  const startEditingTime = (log: LogEntry) => {
-    const date = new Date(log.timestamp)
-    // Format as datetime-local input value: YYYY-MM-DDTHH:mm
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    const formatted = `${year}-${month}-${day}T${hours}:${minutes}`
-    setEditingLogId(log.id)
-    setEditingTimestamp(formatted)
-  }
-
-  const saveEditedTime = async () => {
-    if (!editingLogId || !editingTimestamp) return
+  const handleUpdateLog = async (updatedLog: LogEntry) => {
     try {
-      const newDate = new Date(editingTimestamp)
-      const log = logs.find((l) => l.id === editingLogId)
-      if (!log) return
-
-      const updatedLog: LogEntry = {
-        ...log,
-        timestamp: newDate.toISOString(),
-      }
-
       await dbUpdateLog({
         id: updatedLog.id,
         substance: updatedLog.substance,
@@ -348,17 +275,10 @@ export default function App() {
         timestamp: updatedLog.timestamp,
       } as any)
 
-      setLogs((s) => s.map((l) => (l.id === editingLogId ? updatedLog : l)))
-      setEditingLogId(null)
-      setEditingTimestamp('')
+      setLogs((s) => s.map((l) => (l.id === updatedLog.id ? updatedLog : l)))
     } catch (err) {
-      console.warn('Failed to save time', err)
+      console.warn('Failed to update log', err)
     }
-  }
-
-  const cancelEditingTime = () => {
-    setEditingLogId(null)
-    setEditingTimestamp('')
   }
 
   // Trends UI state
@@ -643,62 +563,7 @@ export default function App() {
             <>
               <ul className="list">
                 {paginatedLogs.map((log) => (
-                  <li key={log.id} className="card item">
-                    <div className="item-head">
-                      <div className="item-title">{log.substance}</div>
-                      {editingLogId === log.id ? (
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <input
-                            type="datetime-local"
-                            value={editingTimestamp}
-                            onChange={(e) => setEditingTimestamp(e.target.value)}
-                            style={{ padding: '6px 8px', borderRadius: '6px', border: '1px solid #11202b', background: '#07111a', color: 'var(--text)', width: '200px' }}
-                          />
-                          <button
-                            type="button"
-                            className="btn primary"
-                            onClick={saveEditedTime}
-                            style={{ padding: '6px 10px', fontSize: '0.9rem' }}
-                          >
-                            Save
-                          </button>
-                          <button
-                            type="button"
-                            className="btn ghost"
-                            onClick={cancelEditingTime}
-                            style={{ padding: '6px 10px', fontSize: '0.9rem' }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <div
-                          className="item-time"
-                          onClick={() => startEditingTime(log)}
-                          style={{ cursor: 'pointer' }}
-                          title="Click to edit"
-                        >
-                          {formatDateTime(log.timestamp)}
-                        </div>
-                      )}
-                    </div>
-                    {log.feelings && log.feelings.length > 0 && (
-                      <div className="item-feelings" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-                        {log.feelings.map((f) => (
-                          <span key={f} className="pill history-pill">{f}</span>
-                        ))}
-                      </div>
-                    )}
-
-                    {log.dosage && (
-                      <div className="item-dosage" style={{ color: '#cfe0ff', marginBottom: 6 }}>
-                        <strong style={{ color: 'var(--muted)', marginRight: 6 }}>Dose:</strong>
-                        {log.dosage}
-                      </div>
-                    )}
-
-                    {log.notes && <div className="item-notes">{log.notes}</div>}
-                  </li>
+                  <LogItem key={log.id} log={log} onUpdate={handleUpdateLog} />
                 ))}
               </ul>
 
