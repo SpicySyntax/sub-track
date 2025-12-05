@@ -1,5 +1,5 @@
-import React, { useEffect, useState, FormEvent, useMemo } from 'react'
-import { getAllLogs as dbGetAll, addLog as dbAddLog, updateLog as dbUpdateLog, deleteLog as dbDeleteLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw } from './db'
+import React, { useEffect, useState, FormEvent, useMemo, useRef } from 'react'
+import { getAllLogs as dbGetAll, addLog as dbAddLog, updateLog as dbUpdateLog, deleteLog as dbDeleteLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw, importRaw as dbImportRaw } from './db'
 import { LogEntry, SUBSTANCE_OPTIONS, FEELING_OPTIONS, DOSAGE_OPTIONS, defaultSubstanceColors, formatDateTime } from './constants'
 import { LogItem } from './components/LogItem'
 
@@ -212,6 +212,7 @@ export default function App() {
   const [dosage, setDosage] = useState('')
 
   const [dbReady, setDbReady] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
 
   // Initialize DB and load logs once
@@ -541,11 +542,17 @@ export default function App() {
           </div>
 
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={async () => {
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".sqlite,.db"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
                 try {
+                  const buffer = await file.arrayBuffer()
+                  await dbImportRaw(buffer)
                   const rows = await dbGetAll()
                   const parsed = rows.map((r: any) => ({
                     id: r.id,
@@ -556,13 +563,23 @@ export default function App() {
                     timestamp: r.timestamp,
                   }))
                   setLogs(parsed)
-                  console.debug('UI: reloaded from DB, rows=', parsed.length)
+                  setCurrentPage(1)
+                  console.debug('UI: imported DB, rows=', parsed.length)
+                  alert(`Successfully imported ${parsed.length} entries`)
                 } catch (err) {
-                  console.warn('UI: reload from DB failed', err)
+                  console.warn('UI: import failed', err)
+                  alert('Failed to import database. Please ensure the file is a valid SQLite database.')
                 }
+                // Reset file input
+                if (e.target) e.target.value = ''
               }}
+            />
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => fileInputRef.current?.click()}
             >
-              Reload from DB
+              Import from DB
             </button>
 
             <button
