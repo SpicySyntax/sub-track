@@ -372,7 +372,7 @@ export default function App() {
 
           <label>
             <div className="label">Feelings</div>
-            <div className="feelings-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div className="feelings-row" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               {FEELING_OPTIONS.map((f) => {
                 const selected = feelings.includes(f)
                 return (
@@ -383,9 +383,8 @@ export default function App() {
                       setFeelings((s) => (s.includes(f) ? s.filter((x) => x !== f) : [...s, f]))
                     }}
                     aria-pressed={selected}
-                    className={selected ? 'pill selected' : 'pill'}
+                    className={selected ? 'pill selected feeling-pill' : 'pill feeling-pill'}
                     style={{
-                      padding: '6px 10px',
                       borderRadius: 999,
                       border: selected ? '1px solid #333' : '1px solid #ccc',
                       background: selected ? '#e6f0ff' : 'transparent',

@@ -138,7 +138,7 @@ export function LogItem({ log, onUpdate, onDelete }: LogItemProps) {
 
                 <label>
                     <div className="label">Feelings</div>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <div className="feelings-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {FEELING_OPTIONS.map(f => {
                             const selected = editedLog.feelings?.includes(f)
                             return (
@@ -146,9 +146,8 @@ export function LogItem({ log, onUpdate, onDelete }: LogItemProps) {
                                     key={f}
                                     type="button"
                                     onClick={() => toggleFeeling(f)}
-                                    className={selected ? 'pill selected' : 'pill'}
+                                    className={selected ? 'pill selected feeling-pill' : 'pill feeling-pill'}
                                     style={{
-                                        padding: '6px 10px',
                                         borderRadius: 999,
                                         border: selected ? '1px solid #333' : '1px solid #ccc',
                                         background: selected ? '#e6f0ff' : 'transparent',
