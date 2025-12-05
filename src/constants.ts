@@ -14,7 +14,7 @@ export const SUBSTANCE_OPTIONS = [
     'Nicotine',
 ]
 
-export const FEELING_OPTIONS = ['bored', 'tired', 'stressed', 'energized', 'angry', 'happy', 'sad', 'anxious', 'in-pain', 'neutral', 'lonely', 'relaxed']
+export const FEELING_OPTIONS = ['bored', 'tired', 'stressed', 'energized', 'angry', 'happy', 'anxious', 'in-pain', 'neutral', 'lonely', 'relaxed', 'sad']
 
 export const DOSAGE_OPTIONS: Record<string, { label: string; description: string }[]> = {
     Marijuana: [
