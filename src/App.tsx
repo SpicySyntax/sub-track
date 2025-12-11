@@ -487,7 +487,7 @@ export default function App() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   <div className="label" style={{ margin: 0 }}>Range</div>
-                  {[7, 30, 90].map((d) => (
+                  {[7, 14, 30, 90].map((d) => (
                     <button key={d} className={trendDays === d ? 'btn primary' : 'btn ghost'} onClick={() => setTrendDays(d)}>
                       {d}d
                     </button>
@@ -578,7 +578,7 @@ export default function App() {
               className="btn ghost"
               onClick={() => fileInputRef.current?.click()}
             >
-              Import from DB
+              Import Data
             </button>
 
             <button
@@ -600,7 +600,7 @@ export default function App() {
                 }
               }}
             >
-              Export DB
+              Export Data
             </button>
           </div>
 

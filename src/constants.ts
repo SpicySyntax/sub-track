@@ -9,7 +9,6 @@ export interface LogEntry {
 
 export const SUBSTANCE_OPTIONS = [
     'Marijuana',
-    'Caffeine',
     'Alcohol',
     'Nicotine',
 ]
@@ -18,20 +17,15 @@ export const FEELING_OPTIONS = ['bored', 'tired', 'stressed', 'energized', 'angr
 
 export const DOSAGE_OPTIONS: Record<string, { label: string; description: string }[]> = {
     Marijuana: [
+        { label: '1mg', description: 'Micro (edible)' },
         { label: '2.5mg', description: 'Micro (edible)' },
         { label: '5mg', description: 'Light (edible)' },
+        { label: '7.5mg', description: 'Standard (edible)' },
         { label: '10mg', description: 'Standard (edible)' },
         { label: '20mg', description: 'Strong (edible)' },
         { label: '1 hit', description: 'Single hit (flower)' },
         { label: '2-3 hits', description: 'Few hits (flower)' },
         { label: '1 Dab', description: 'Concentrate' },
-    ],
-    Caffeine: [
-        { label: '1 cup', description: 'Coffee' },
-        { label: '2 cups', description: 'Coffee' },
-        { label: '1 shot espresso', description: 'Espresso' },
-        { label: '2 shots espresso', description: 'Espresso' },
-        { label: '1 cup tea', description: 'Tea' },
     ],
     Alcohol: [
         { label: '1 drink', description: 'Single standard drink' },
@@ -48,7 +42,6 @@ export const DOSAGE_OPTIONS: Record<string, { label: string; description: string
 
 export const defaultSubstanceColors: Record<string, string> = {
     Marijuana: '#8bd99b',
-    Caffeine: '#ffd166',
     Alcohol: '#ff8b8b',
     Nicotine: '#bdbdf6',
 }
