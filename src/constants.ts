@@ -40,6 +40,32 @@ export const DOSAGE_OPTIONS: Record<string, { label: string; description: string
     ],
 }
 
+export const DOSAGE_WEIGHTS: Record<string, number> = {
+    // Marijuana - aiming for roughly mg equivalence
+    // For inhalation, 1 hit is roughly estimated. 
+    // This is purely relative for the chart.
+    '1mg': 1,
+    '2.5mg': 2.5,
+    '5mg': 5,
+    '7.5mg': 7.5,
+    '10mg': 10,
+    '20mg': 20,
+    '1 hit': 5,      // approximate 'strength'
+    '2-3 hits': 12,  // approximate 'strength'
+    '1 Dab': 25,     // approximate 'strength'
+
+    // Alcohol - units of standard drinks
+    '1 drink': 1,
+    '2 drinks': 2,
+    '3 drinks': 3,
+    '4+ drinks': 4.5, // slightly more than 4
+
+    // Nicotine - units of cigarettes/strength
+    '1 cigarette': 1,
+    'Few puffs': 0.3, // fraction of a full cig
+    '1 pouch': 1,
+}
+
 export const defaultSubstanceColors: Record<string, string> = {
     Marijuana: '#8bd99b',
     Alcohol: '#ff8b8b',

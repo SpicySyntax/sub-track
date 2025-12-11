@@ -16,7 +16,7 @@ Just open https://spicysyntax.github.io/sub-track/ in your browser or follow the
 5. Tap "Add"
 
 ### Moving your data to a new device/browser
-Under `History` you can export your data as a sqlite file using the `Export DB` button. Once that file is on your new device, you can import it using the `Import from DB` button.
+Under `History` you can export your data as a sqlite file using the `Export Data` button. Once that file is on your new device, you can import it using the `Import Data` button.
 
 ## Development
 see [USAGE.md](./USAGE.md)

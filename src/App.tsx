@@ -1,25 +1,8 @@
 import React, { useEffect, useState, FormEvent, useMemo, useRef } from 'react'
 import { getAllLogs as dbGetAll, addLog as dbAddLog, updateLog as dbUpdateLog, deleteLog as dbDeleteLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw, importRaw as dbImportRaw } from './db'
-import { LogEntry, SUBSTANCE_OPTIONS, FEELING_OPTIONS, DOSAGE_OPTIONS, defaultSubstanceColors, formatDateTime } from './constants'
+import { LogEntry, SUBSTANCE_OPTIONS, FEELING_OPTIONS, DOSAGE_OPTIONS, DOSAGE_WEIGHTS, defaultSubstanceColors, formatDateTime } from './constants'
+
 import { LogItem } from './components/LogItem'
-
-// --- TYPE DEFINITIONS ---
-// --- TYPE DEFINITIONS ---
-// Moved to constants.ts
-
-
-
-// Limited set of substance options shown in the UI
-// Limited set of substance options shown in the UI
-// Moved to constants.ts
-
-
-
-// Contextual dosage options by substance
-// Contextual dosage options by substance
-// Moved to constants.ts
-
-// localStorage key is no longer used; persistence now via sqlite in IndexedDB
 
 // --- Helpers for trends ---
 const getDateKey = (iso: string) => {
@@ -30,8 +13,6 @@ const getDateKey = (iso: string) => {
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
 }
-
-
 
 function buildDateRange(days: number | null) {
   // returns array of date keys from (today - days + 1) .. today inclusive
@@ -60,7 +41,33 @@ function aggregateUsageOverTime(logs: any[], days: number | null, substances: st
     if (!l.timestamp) continue
     const key = getDateKey(l.timestamp)
     const idx = labels.indexOf(key)
-    if (idx >= 0) series[l.substance][idx]++
+    if (idx >= 0) {
+      if (!series[l.substance]) series[l.substance] = labels.map(() => 0)
+
+      let magnitude = 0
+      if (l.dosage) {
+        // Try exact match in DOSAGE_WEIGHTS first
+        if (DOSAGE_WEIGHTS[l.dosage] !== undefined) {
+          magnitude = DOSAGE_WEIGHTS[l.dosage]
+        } else {
+          // Try parsing "15 mg" -> 15
+          const parsed = parseFloat(l.dosage)
+          if (!isNaN(parsed)) {
+            magnitude = parsed
+          }
+        }
+      }
+
+      // If magnitude is 0 (no dosage or failed parse), decide if we should count as 1 or 0.
+      // The user wants "magnitude". For substances like Alcohol where "1 drink" = 1, 
+      // missing dosage usually implies "1 unit" or we could just count as 1 if we want to show *activity* at minimum.
+      // However, if we strictly track "weight", a null dosage is ambiguous. 
+      // Let's fallback to 1 as a "session" default so the chart isn't empty for un-dosaged logs,
+      // which aligns with minimal "usage".
+      if (magnitude === 0) magnitude = 1
+
+      series[l.substance][idx] += magnitude
+    }
   }
 
   return { labels, series }
