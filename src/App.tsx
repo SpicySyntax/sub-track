@@ -73,12 +73,13 @@ function aggregateUsageOverTime(logs: any[], days: number | null, substances: st
   return { labels, series }
 }
 
-function aggregateFrequencies(logs: any[], days: number | null) {
+function aggregateFrequencies(logs: any[], days: number | null, filterSubstance: string | 'All' = 'All') {
   const counts: Record<string, number> = {}
   const cutoff = days ? Date.now() - days * 24 * 60 * 60 * 1000 : null
   for (const l of logs) {
     if (!l.substance) continue
     if (cutoff && new Date(l.timestamp).getTime() < cutoff) continue
+    if (filterSubstance !== 'All' && l.substance !== filterSubstance) continue
     counts[l.substance] = (counts[l.substance] || 0) + 1
   }
   return counts
@@ -326,11 +327,12 @@ export default function App() {
 
   const usageOverTime = useMemo(() => {
     // when showing all substances we include all known options
-    const subs = SUBSTANCE_OPTIONS
+    // if filtering, we only show that one
+    const subs = trendFilterSubstance === 'All' ? SUBSTANCE_OPTIONS : [trendFilterSubstance]
     return aggregateUsageOverTime((logs as any[]), trendDays, subs)
-  }, [logs, trendDays])
+  }, [logs, trendDays, trendFilterSubstance])
 
-  const frequencyCounts = useMemo(() => aggregateFrequencies((logs as any[]), trendDays), [logs, trendDays])
+  const frequencyCounts = useMemo(() => aggregateFrequencies((logs as any[]), trendDays, trendFilterSubstance), [logs, trendDays, trendFilterSubstance])
 
   const feelingsCounts = useMemo(() => aggregateFeelings((logs as any[]), trendDays, trendFilterSubstance), [logs, trendDays, trendFilterSubstance])
 
