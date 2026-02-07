@@ -12,7 +12,6 @@ let initialized = false
 export type Row = {
   id: string
   substance: string
-  notes: string | null
   feelings: string | null // JSON stringified array or null
   dosage: string | null
   timestamp: string
@@ -80,7 +79,6 @@ async function ensureInit() {
     `CREATE TABLE IF NOT EXISTS logs (
       id TEXT PRIMARY KEY,
       substance TEXT NOT NULL,
-      notes TEXT,
       feelings TEXT,
       dosage TEXT,
       timestamp TEXT NOT NULL
@@ -104,7 +102,7 @@ async function persist() {
 
 export async function getAllLogs(): Promise<Row[]> {
   await ensureInit()
-  const res = db.exec('SELECT id, substance, notes, feelings, dosage, timestamp FROM logs ORDER BY timestamp DESC')
+  const res = db.exec('SELECT id, substance, feelings, dosage, timestamp FROM logs ORDER BY timestamp DESC')
   if (!res || res.length === 0) return []
   console.debug('db: getAllLogs rows=', res[0].values.length)
   const values = res[0].values as any[]
@@ -118,9 +116,9 @@ export async function getAllLogs(): Promise<Row[]> {
 
 export async function addLog(row: Row) {
   await ensureInit()
-  const stmt = db.prepare('INSERT INTO logs (id, substance, notes, feelings, dosage, timestamp) VALUES (?, ?, ?, ?, ?, ?)')
+  const stmt = db.prepare('INSERT INTO logs (id, substance, feelings, dosage, timestamp) VALUES (?, ?, ?, ?, ?)')
   try {
-    stmt.run([row.id, row.substance, row.notes ?? null, row.feelings ?? null, row.dosage ?? null, row.timestamp])
+    stmt.run([row.id, row.substance, row.feelings ?? null, row.dosage ?? null, row.timestamp])
   } finally {
     stmt.free()
   }
@@ -130,9 +128,9 @@ export async function addLog(row: Row) {
 
 export async function updateLog(row: Row) {
   await ensureInit()
-  const stmt = db.prepare('UPDATE logs SET substance = ?, notes = ?, feelings = ?, dosage = ?, timestamp = ? WHERE id = ?')
+  const stmt = db.prepare('UPDATE logs SET substance = ?, feelings = ?, dosage = ?, timestamp = ? WHERE id = ?')
   try {
-    stmt.run([row.substance, row.notes ?? null, row.feelings ?? null, row.dosage ?? null, row.timestamp, row.id])
+    stmt.run([row.substance, row.feelings ?? null, row.dosage ?? null, row.timestamp, row.id])
   } finally {
     stmt.free()
   }
@@ -172,7 +170,6 @@ export async function importRaw(buffer: ArrayBuffer | Uint8Array) {
     `CREATE TABLE IF NOT EXISTS logs (
       id TEXT PRIMARY KEY,
       substance TEXT NOT NULL,
-      notes TEXT,
       feelings TEXT,
       dosage TEXT,
       timestamp TEXT NOT NULL

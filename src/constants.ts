@@ -1,7 +1,6 @@
 export interface LogEntry {
     id: string
     substance: string
-    notes: string
     feelings?: string[]
     dosage?: string
     timestamp: string // ISO string for storage

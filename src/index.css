@@ -162,10 +162,7 @@ textarea {
   font-size: 0.9rem
 }
 
-.item-notes {
-  color: #cfe0ff;
-  white-space: pre-wrap
-}
+
 
 /* Pills used in the form and history */
 .pill {

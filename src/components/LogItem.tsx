@@ -162,15 +162,7 @@ export function LogItem({ log, onUpdate, onDelete }: LogItemProps) {
                     </div>
                 </label>
 
-                <label>
-                    <div className="label">Notes</div>
-                    <textarea
-                        value={editedLog.notes || ''}
-                        onChange={e => setEditedLog(prev => ({ ...prev, notes: e.target.value }))}
-                        rows={3}
-                        placeholder="Notes..."
-                    />
-                </label>
+
             </li>
         )
     }
@@ -203,7 +195,7 @@ export function LogItem({ log, onUpdate, onDelete }: LogItemProps) {
                 </div>
             )}
 
-            {log.notes && <div className="item-notes">{log.notes}</div>}
+
 
             <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <button className="btn ghost" onClick={handleStartEdit} style={{ fontSize: '0.8rem', padding: '4px 8px' }}>Edit</button>

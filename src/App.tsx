@@ -215,7 +215,6 @@ function HorizontalBarChart({ items }: { items: { label: string; value: number; 
 export default function App() {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [substance, setSubstance] = useState('')
-  const [notes, setNotes] = useState('')
   const [feelings, setFeelings] = useState<string[]>([])
   const [dosage, setDosage] = useState('')
 
@@ -237,7 +236,6 @@ export default function App() {
           const parsed = rows.map((r: any) => ({
             id: r.id,
             substance: r.substance,
-            notes: r.notes || '',
             feelings: r.feelings ? JSON.parse(r.feelings) : undefined,
             dosage: r.dosage || undefined,
             timestamp: r.timestamp,
@@ -259,7 +257,6 @@ export default function App() {
     const newLog: LogEntry = {
       id: crypto.randomUUID(),
       substance: substance.trim(),
-      notes: notes.trim(),
       feelings: feelings.length ? feelings : undefined,
       dosage: dosage.trim() || undefined,
       timestamp: new Date().toISOString(),
@@ -269,7 +266,6 @@ export default function App() {
       await dbAddLog({
         id: newLog.id,
         substance: newLog.substance,
-        notes: newLog.notes || null,
         feelings: newLog.feelings ? JSON.stringify(newLog.feelings) : null,
         dosage: newLog.dosage ?? null,
         timestamp: newLog.timestamp,
@@ -280,7 +276,6 @@ export default function App() {
     }
 
     setSubstance('')
-    setNotes('')
     setFeelings([])
     setDosage('')
     setCurrentPage(1)
@@ -301,7 +296,6 @@ export default function App() {
       await dbUpdateLog({
         id: updatedLog.id,
         substance: updatedLog.substance,
-        notes: updatedLog.notes || null,
         feelings: updatedLog.feelings ? JSON.stringify(updatedLog.feelings) : null,
         dosage: updatedLog.dosage ?? null,
         timestamp: updatedLog.timestamp,
@@ -381,59 +375,6 @@ export default function App() {
             </div>
           </label>
 
-          <label
-            onMouseEnter={() => setIsFeelingsHovered(true)}
-            onMouseLeave={() => setIsFeelingsHovered(false)}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className="label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Feelings</span>
-              {!isFeelingsHovered && feelings.length === 0 && (
-                <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>(Hover to expand)</span>
-              )}
-            </div>
-            <div
-              className="feelings-row-container"
-              style={{
-                maxHeight: (isFeelingsHovered || feelings.length > 0) ? '500px' : '0px',
-                overflow: 'hidden',
-                transition: 'max-height 0.3s ease-in-out, opacity 0.2s ease-in-out',
-                opacity: (isFeelingsHovered || feelings.length > 0) ? 1 : 0,
-                marginTop: (isFeelingsHovered || feelings.length > 0) ? 8 : 0
-              }}
-            >
-              <div className="feelings-row" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                {FEELING_OPTIONS.map((f) => {
-                  const selected = feelings.includes(f)
-                  return (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setFeelings((s) => (s.includes(f) ? s.filter((x) => x !== f) : [...s, f]))
-                      }}
-                      aria-pressed={selected}
-                      className={selected ? 'pill selected feeling-pill' : 'pill feeling-pill'}
-                      style={{
-                        borderRadius: 999,
-                        border: selected ? '1px solid #333' : '1px solid #ccc',
-                        background: selected ? '#e6f0ff' : 'transparent',
-                        cursor: 'pointer',
-                        /* Ensure sufficient contrast: when a feeling is selected we use a dark text color
-                           because the selected background is a light color (#e6f0ff). This overrides
-                           the global .pill.selected text color which is light (for other pill types). */
-                        color: selected ? '#07111a' : undefined,
-                      }}
-                    >
-                      {f}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </label>
-
           {substance && DOSAGE_OPTIONS[substance] && (
             <label>
               <div className="label">Dosage</div>
@@ -488,14 +429,57 @@ export default function App() {
             </label>
           )}
 
-          <label>
-            <div className="label">Notes</div>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              placeholder="Context, context details (optional)"
-            />
+          <label
+            onMouseEnter={() => setIsFeelingsHovered(true)}
+            onMouseLeave={() => setIsFeelingsHovered(false)}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Feelings</span>
+              {!isFeelingsHovered && feelings.length === 0 && (
+                <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>(Hover to expand)</span>
+              )}
+            </div>
+            <div
+              className="feelings-row-container"
+              style={{
+                maxHeight: (isFeelingsHovered || feelings.length > 0) ? '500px' : '0px',
+                overflow: 'hidden',
+                transition: 'max-height 0.3s ease-in-out, opacity 0.2s ease-in-out',
+                opacity: (isFeelingsHovered || feelings.length > 0) ? 1 : 0,
+                marginTop: (isFeelingsHovered || feelings.length > 0) ? 8 : 0
+              }}
+            >
+              <div className="feelings-row" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                {FEELING_OPTIONS.map((f) => {
+                  const selected = feelings.includes(f)
+                  return (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setFeelings((s) => (s.includes(f) ? s.filter((x) => x !== f) : [...s, f]))
+                      }}
+                      aria-pressed={selected}
+                      className={selected ? 'pill selected feeling-pill' : 'pill feeling-pill'}
+                      style={{
+                        borderRadius: 999,
+                        border: selected ? '1px solid #333' : '1px solid #ccc',
+                        background: selected ? '#e6f0ff' : 'transparent',
+                        cursor: 'pointer',
+                        /* Ensure sufficient contrast: when a feeling is selected we use a dark text color
+                           because the selected background is a light color (#e6f0ff). This overrides
+                           the global .pill.selected text color which is light (for other pill types). */
+                        color: selected ? '#07111a' : undefined,
+                      }}
+                    >
+                      {f}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </label>
 
           <div className="actions">
@@ -588,7 +572,6 @@ export default function App() {
                   const parsed = rows.map((r: any) => ({
                     id: r.id,
                     substance: r.substance,
-                    notes: r.notes || '',
                     feelings: r.feelings ? JSON.parse(r.feelings) : undefined,
                     dosage: r.dosage || undefined,
                     timestamp: r.timestamp,
