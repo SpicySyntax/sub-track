@@ -23,20 +23,21 @@ export const DOSAGE_OPTIONS: Record<string, { label: string; description: string
         { label: '7.5mg', description: 'Standard (edible)' },
         { label: '10mg', description: 'Standard (edible)' },
         { label: '20mg', description: 'Strong (edible)' },
-        { label: '1 hit', description: 'Single hit (flower)' },
-        { label: '2-3 hits', description: 'Few hits (flower)' },
-        { label: '1 Dab', description: 'Concentrate' },
+        { label: '1 hit', description: 'Single hit (concentrate)' },
+        { label: '2 hits', description: '2 hits (concentrate)' },
+        { label: '3 hits', description: '3 hits (concentrate)' },
     ],
     Alcohol: [
         { label: '1 drink', description: 'Single standard drink' },
         { label: '2 drinks', description: 'Two standard drinks' },
         { label: '3 drinks', description: 'Three standard drinks' },
-        { label: '4+ drinks', description: 'Four or more drinks' },
+        { label: '4 drinks', description: 'Three standard drinks' },
+
     ],
     Nicotine: [
+        { label: '3mg', description: 'oral Nicotine' },
+        { label: '6mg', description: 'oral Nicotine' },
         { label: '1 cigarette', description: 'Single cigarette' },
-        { label: 'Few puffs', description: 'Vape/e-cig' },
-        { label: '1 pouch', description: 'Nicotine pouch (3mg)' },
     ],
 }
 
@@ -50,8 +51,7 @@ export const DOSAGE_WEIGHTS: Record<string, number> = {
     '7.5mg': 7.5,
     '10mg': 10,
     '20mg': 20,
-    '1 hit': 5,      // approximate 'strength'
-    '2-3 hits': 12,  // approximate 'strength'
+    '1 hit': 7.1,      // approximate 'strength'
     '1 Dab': 25,     // approximate 'strength'
 
     // Alcohol - units of standard drinks
