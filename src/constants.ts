@@ -31,7 +31,7 @@ export const DOSAGE_OPTIONS: Record<string, { label: string; description: string
         { label: '1 drink', description: 'Single standard drink' },
         { label: '2 drinks', description: 'Two standard drinks' },
         { label: '3 drinks', description: 'Three standard drinks' },
-        { label: '4 drinks', description: 'Three standard drinks' },
+        { label: '4 drinks', description: 'Four standard drinks' },
 
     ],
     Nicotine: [
@@ -51,19 +51,20 @@ export const DOSAGE_WEIGHTS: Record<string, number> = {
     '7.5mg': 7.5,
     '10mg': 10,
     '20mg': 20,
-    '1 hit': 7.1,      // approximate 'strength'
-    '1 Dab': 25,     // approximate 'strength'
+    '1 hit': 8,
+    '2 hits': 16,
+    '3 hits': 24,
 
     // Alcohol - units of standard drinks
     '1 drink': 1,
     '2 drinks': 2,
     '3 drinks': 3,
-    '4+ drinks': 4.5, // slightly more than 4
+    '4 drinks': 4,
 
     // Nicotine - units of cigarettes/strength
-    '1 cigarette': 1,
-    'Few puffs': 0.3, // fraction of a full cig
-    '1 pouch': 1,
+    '3mg': 3,
+    '6mg': 6,
+    '1 cigarette': 2,
 }
 
 export const defaultSubstanceColors: Record<string, string> = {

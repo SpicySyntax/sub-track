@@ -222,6 +222,8 @@ export default function App() {
   const [dbReady, setDbReady] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [isFeelingsHovered, setIsFeelingsHovered] = useState(false)
+
 
   // Initialize DB and load logs once
   useEffect(() => {
@@ -379,35 +381,56 @@ export default function App() {
             </div>
           </label>
 
-          <label>
-            <div className="label">Feelings</div>
-            <div className="feelings-row" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              {FEELING_OPTIONS.map((f) => {
-                const selected = feelings.includes(f)
-                return (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={() => {
-                      setFeelings((s) => (s.includes(f) ? s.filter((x) => x !== f) : [...s, f]))
-                    }}
-                    aria-pressed={selected}
-                    className={selected ? 'pill selected feeling-pill' : 'pill feeling-pill'}
-                    style={{
-                      borderRadius: 999,
-                      border: selected ? '1px solid #333' : '1px solid #ccc',
-                      background: selected ? '#e6f0ff' : 'transparent',
-                      cursor: 'pointer',
-                      /* Ensure sufficient contrast: when a feeling is selected we use a dark text color
-                         because the selected background is a light color (#e6f0ff). This overrides
-                         the global .pill.selected text color which is light (for other pill types). */
-                      color: selected ? '#07111a' : undefined,
-                    }}
-                  >
-                    {f}
-                  </button>
-                )
-              })}
+          <label
+            onMouseEnter={() => setIsFeelingsHovered(true)}
+            onMouseLeave={() => setIsFeelingsHovered(false)}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Feelings</span>
+              {!isFeelingsHovered && feelings.length === 0 && (
+                <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>(Hover to expand)</span>
+              )}
+            </div>
+            <div
+              className="feelings-row-container"
+              style={{
+                maxHeight: (isFeelingsHovered || feelings.length > 0) ? '500px' : '0px',
+                overflow: 'hidden',
+                transition: 'max-height 0.3s ease-in-out, opacity 0.2s ease-in-out',
+                opacity: (isFeelingsHovered || feelings.length > 0) ? 1 : 0,
+                marginTop: (isFeelingsHovered || feelings.length > 0) ? 8 : 0
+              }}
+            >
+              <div className="feelings-row" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                {FEELING_OPTIONS.map((f) => {
+                  const selected = feelings.includes(f)
+                  return (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setFeelings((s) => (s.includes(f) ? s.filter((x) => x !== f) : [...s, f]))
+                      }}
+                      aria-pressed={selected}
+                      className={selected ? 'pill selected feeling-pill' : 'pill feeling-pill'}
+                      style={{
+                        borderRadius: 999,
+                        border: selected ? '1px solid #333' : '1px solid #ccc',
+                        background: selected ? '#e6f0ff' : 'transparent',
+                        cursor: 'pointer',
+                        /* Ensure sufficient contrast: when a feeling is selected we use a dark text color
+                           because the selected background is a light color (#e6f0ff). This overrides
+                           the global .pill.selected text color which is light (for other pill types). */
+                        color: selected ? '#07111a' : undefined,
+                      }}
+                    >
+                      {f}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </label>
 
