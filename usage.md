@@ -1,21 +1,21 @@
-## Sub-Track Usage Guide
-
-This guide provides basic setup instructions for developers.Node.js VersionThis project is intended to run on a recent Long-Term Support (LTS) version of Node.js. We recommend using Node.js 20 (Iron). If you use nvm (Node Version Manager), you can set the correct version in your terminal by running:
-
 ## Node Version
 
-```bash
-nvm use 20
-```
+This project requires **Node.js 22 (LTS)** or higher (Vite 7 requires Node 20.19+ or 22.12+). We recommend using [nvm-windows](https://github.com/coreybutler/nvm-windows) or [nvm](https://github.com/nvm-sh/nvm).
 
-Or, to use the latest LTS version:
+To set the correct version in your terminal:
 
 ```bash
-nvm use --lts
+nvm install 22
+nvm use 22
 ```
 
-For convenience, you can create a `.nvmrc` file in the project's root directory with the following content:lts/iron
-With this file in place, you can simply run nvm use in the project directory to automatically switch to the correct Node.js version.
+For convenience, you can create a `.nvmrc` file in the project's root directory:
+
+```text
+22
+```
+
+With this file in place, you can run `nvm use` to automatically switch to the correct version.
 
 ## Dependencies
 
