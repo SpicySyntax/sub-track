@@ -1,6 +1,6 @@
 import React, { useEffect, useState, FormEvent, useMemo, useRef } from 'react'
 import { getAllLogs as dbGetAll, addLog as dbAddLog, updateLog as dbUpdateLog, deleteLog as dbDeleteLog, clearAll as dbClearAll, init as dbInit, exportRaw as dbExportRaw, importRaw as dbImportRaw } from './db'
-import { LogEntry, SUBSTANCE_OPTIONS, FEELING_OPTIONS, DOSAGE_OPTIONS, DOSAGE_WEIGHTS, defaultSubstanceColors, formatDateTime } from './constants'
+import { LogEntry, SUBSTANCE_OPTIONS, FEELING_OPTIONS, DOSAGE_OPTIONS, defaultSubstanceColors, formatDateTime } from './constants'
 
 import { LogItem } from './components/LogItem'
 
@@ -12,6 +12,15 @@ const getDateKey = (iso: string) => {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+const getDosageWeight = (substance: string, dosageLabel: string): number => {
+  const options = DOSAGE_OPTIONS[substance]
+  if (options) {
+    const found = options.find(opt => opt.label === dosageLabel)
+    if (found) return found.weight
+  }
+  return 0
 }
 
 function buildDateRange(days: number | null) {
@@ -46,10 +55,9 @@ function aggregateUsageOverTime(logs: any[], days: number | null, substances: st
 
       let magnitude = 0
       if (l.dosage) {
-        // Try exact match in DOSAGE_WEIGHTS first
-        if (DOSAGE_WEIGHTS[l.dosage] !== undefined) {
-          magnitude = DOSAGE_WEIGHTS[l.dosage]
-        } else {
+        // Try exact match in DOSAGE_OPTIONS first
+        magnitude = getDosageWeight(l.substance, l.dosage)
+        if (magnitude === 0) {
           // Try parsing "15 mg" -> 15
           const parsed = parseFloat(l.dosage)
           if (!isNaN(parsed)) {
